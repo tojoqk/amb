@@ -1,4 +1,6 @@
-#lang racket
+#lang racket/base
+(require racket/sequence)
+(require racket/stream)
 
 (struct amb-fail ())
 (provide amb-fail?)
@@ -22,7 +24,7 @@
   (syntax-rules ()
     [(_ body body* ...)
      (let* ([return #f]
-            [continue identity]
+            [continue (λ (x) (void))]
             [yield
              (λ (obj)
                (let/cc k
