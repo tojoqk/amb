@@ -13,8 +13,8 @@
     [(_ e0 e1 ...)
      (let/cc escape
        (let ([fail-prev (fail)])
-         (let/cc fail-next
-           (fail fail-next)
+         (let/cc fail-current
+           (fail fail-current)
            (escape e0))
          (fail fail-prev))
        (amb e1 ...))]))
