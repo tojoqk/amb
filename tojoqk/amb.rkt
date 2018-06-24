@@ -20,29 +20,31 @@
        (amb e1 ...))]))
 (provide amb)
 
-(define-syntax in-amb
-  (syntax-rules ()
-    [(_ body body* ...)
-     (let* ([return #f]
-            [continue (λ (x) (void))]
-            [yield
-             (λ (obj)
-               (let/cc k
-                 (set! continue k)
-                 (return obj)))])
-       (define (f)
-         (let/cc k
-           (set! return k)
-           (continue (void))
-           (parameterize ([fail (λ () (return (amb-fail)))])
-             (yield (begin body body* ...))
-             (amb))))
-       (in-stream
-        (let loop ()
-          (let ([result (f)])
-            (if (amb-fail? result)
-                empty-stream
-                (stream-cons result (loop)))))))]))
+(define (call-with-amb th)
+  (parameterize ([fail amb-fail])
+    (th)))
+
+(define (in-amb th)
+  (let* ([return #f]
+         [continue (λ (x) (void))]
+         [yield
+          (λ (obj)
+            (let/cc k
+              (set! continue k)
+              (return obj)))])
+    (define (gen)
+      (let/cc k
+        (set! return k)
+        (continue (void))
+        (parameterize ([fail (λ () (return (amb-fail)))])
+          (yield (th))
+          (amb))))
+    (in-stream
+     (let loop ()
+       (let ([result (gen)])
+         (if (amb-fail? result)
+             empty-stream
+             (stream-cons result (loop))))))))
 (provide in-amb)
 
 (define (amb-clear!)
