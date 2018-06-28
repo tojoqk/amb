@@ -1,6 +1,11 @@
 #lang racket/base
 (require racket/sequence)
 (require racket/stream)
+(require racket/contract)
+
+(module+ test
+  (require rackunit)
+  (require racket/function))
 
 (struct amb-fail ())
 (provide amb-fail?)
@@ -23,7 +28,7 @@
 (define (call-with-amb th)
   (parameterize ([fail amb-fail])
     (th)))
-(provide call-with-amb)
+(provide/contract [call-with-amb (-> (-> void? any/c) any/c)])
 
 (define (in-amb th)
   (let* ([return #f]
@@ -46,8 +51,16 @@
          (if (amb-fail? result)
              empty-stream
              (stream-cons result (loop))))))))
-(provide in-amb)
+(provide/contract [in-amb (-> (-> void? any/c) any/c)])
+
+(module+ test
+  (check-equal? (sequence->list (in-amb (thunk (amb 1 2 3)))) '(1 2 3))
+  (check-equal? (sequence->list (in-amb (thunk
+                                         (let* ([x (amb 1 2 3)]
+                                                [y (amb 10 20 30)])
+                                           (+ x y)))))
+                '(11 21 31 12 22 32 13 23 33)))
 
 (define (amb-clear!)
   (fail amb-fail))
-(provide amb-clear!)
+(provide/contract [amb-clear! (-> void?)])
