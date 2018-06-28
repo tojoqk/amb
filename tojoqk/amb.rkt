@@ -23,6 +23,7 @@
 (define (call-with-amb th)
   (parameterize ([fail amb-fail])
     (th)))
+(provide call-with-amb)
 
 (define (in-amb th)
   (let* ([return #f]
