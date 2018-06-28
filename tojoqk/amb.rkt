@@ -28,7 +28,7 @@
 (define (call-with-amb th)
   (parameterize ([fail amb-fail])
     (th)))
-(provide/contract [call-with-amb (-> (-> void? any/c) any/c)])
+(provide/contract [call-with-amb (-> (-> any/c) any/c)])
 
 (define (in-amb th)
   (let* ([return #f]
@@ -51,7 +51,7 @@
          (if (amb-fail? result)
              empty-stream
              (stream-cons result (loop))))))))
-(provide/contract [in-amb (-> (-> void? any/c) any/c)])
+(provide/contract [in-amb (-> (-> any/c) any/c)])
 
 (module+ test
   (check-equal? (sequence->list (in-amb (thunk (amb 1 2 3)))) '(1 2 3))
