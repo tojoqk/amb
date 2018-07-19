@@ -10,23 +10,23 @@
 (struct amb-fail ())
 (provide amb-fail?)
 
-(define fail (make-parameter amb-fail))
+(define current-fail (make-parameter amb-fail))
 
 (define-syntax amb
   (syntax-rules ()
-    [(_) ((fail))]
+    [(_) ((current-fail))]
     [(_ e0 e1 ...)
      (let/cc escape
-       (let ([fail-prev (fail)])
-         (let/cc fail-current
-           (fail fail-current)
+       (let ([previous-fail (current-fail)])
+         (let/cc current-fail*
+           (current-fail current-fail*)
            (escape e0))
-         (fail fail-prev))
+         (current-fail previous-fail))
        (amb e1 ...))]))
 (provide amb)
 
 (define (call-with-amb th)
-  (parameterize ([fail amb-fail])
+  (parameterize ([current-fail amb-fail])
     (th)))
 (provide/contract [call-with-amb (-> (-> any/c) any/c)])
 
@@ -42,7 +42,7 @@
       (let/cc k
         (set! return k)
         (continue (void))
-        (parameterize ([fail (λ () (return (amb-fail)))])
+        (parameterize ([current-fail (λ () (return (amb-fail)))])
           (yield (th))
           (amb))))
     (in-stream
@@ -62,5 +62,5 @@
                 '(11 21 31 12 22 32 13 23 33)))
 
 (define (amb-clear!)
-  (fail amb-fail))
+  (current-fail amb-fail))
 (provide/contract [amb-clear! (-> void?)])
